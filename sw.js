@@ -1,5 +1,5 @@
 // Change this version whenever you upload a new index.html, so phones pick up the update.
-const CACHE = 'ppb-v1';
+const CACHE = 'ppb-v2';
 const SHELL = ['./', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

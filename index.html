@@ -39,24 +39,29 @@ body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-
 button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:14px 10px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
-.head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
-h1{font-family:var(--display);font-weight:600;font-size:30px;line-height:1;margin:0;letter-spacing:.01em}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:8px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding-block:12px 4px}
+h1{font-family:var(--display);font-weight:600;font-size:24px;line-height:1;margin:0;letter-spacing:.01em}
 h1 em{font-style:italic;color:var(--accent);font-weight:500}
 .meta{color:var(--muted);font-size:12.5px;letter-spacing:.04em}
-.tools{display:flex;gap:8px;flex-wrap:wrap}
-.tools input[type=search]{flex:1 1 200px;min-width:0}
+.bar{display:flex;gap:8px}
+.bar input[type=search]{flex:1 1 auto;min-width:0}
+.fbtn{position:relative;flex:none;width:44px;padding:0;display:grid;place-items:center;cursor:pointer;background:var(--surface);border:1px solid var(--line);border-radius:8px;min-height:40px}
+.fbtn[aria-expanded=true]{border-color:var(--accent);color:var(--accent)}
+.fbtn.on::after{content:"";position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.tools{display:flex;gap:8px;flex-wrap:wrap;padding-bottom:2px}
+.tools select{flex:1 1 140px}
 .field,.tools select,.tools input{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 12px;min-height:40px}
 .tools select{flex:0 1 auto;max-width:100%}
 .toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);padding:0 4px;min-height:40px;cursor:pointer}
 .toggle input{accent-color:var(--accent);width:16px;height:16px}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex:none;background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+.chip{flex:none;background:transparent;border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:12.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer}
 .chip small{font-weight:500;opacity:.7;margin-left:5px}
 .chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 
-.brand{margin-top:34px}
+.brand{margin-top:22px}
 .brand h2{font-family:var(--display);font-weight:600;font-size:28px;line-height:1.1;margin:0;display:flex;align-items:baseline;gap:12px;letter-spacing:.03em}
 .brand h2::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--accent),transparent)}
 .brand h2 span{order:2;font-family:var(--body);font-size:12px;font-weight:500;color:var(--muted);letter-spacing:.06em}
@@ -82,7 +87,7 @@ h1 em{font-style:italic;color:var(--accent);font-weight:500}
 .empty{margin-top:56px;text-align:center;color:var(--muted)}
 .empty b{display:block;font-family:var(--display);font-size:24px;font-weight:600;color:var(--fg);margin-bottom:4px}
 
-.fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:13px 20px;font-weight:700;letter-spacing:.03em;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:52px;height:52px;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);border:0;border-radius:50%;font-size:30px;font-weight:500;line-height:1;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.35)}
 
 dialog{background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:14px;padding:0;width:calc(100% - 32px);max-width:500px;max-height:calc(100% - 32px)}
 dialog::backdrop{background:rgba(0,0,0,.6)}
@@ -101,13 +106,18 @@ label .field{font-size:15px;font-weight:500;letter-spacing:0;text-transform:none
 </style>
 
 <div class="wrap" id="app">
+  <div class="head">
+    <h1>Phone <em>Price Book</em></h1>
+    <div class="meta" id="meta">Loading…</div>
+  </div>
   <div class="top">
-    <div class="head">
-      <h1>Phone <em>Price Book</em></h1>
-      <div class="meta" id="meta">Loading…</div>
+    <div class="bar">
+      <input class="field" type="search" id="q" placeholder="Search model, color, brand…" autocomplete="off">
+      <button class="fbtn" type="button" id="fbtn" aria-expanded="false" aria-controls="tools" aria-label="Filters and options">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+      </button>
     </div>
-    <div class="tools">
-      <input type="search" id="q" placeholder="Search model, color, brand…" autocomplete="off">
+    <div class="tools" id="tools" hidden>
       <select id="fcat" aria-label="Category"><option value="">All categories</option></select>
       <select id="sort" aria-label="Sort">
         <option value="ord">List order</option>
@@ -126,7 +136,7 @@ label .field{font-size:15px;font-weight:500;letter-spacing:0;text-transform:none
   <div id="list"><div class="empty"><b>Opening the price book</b>Loading your items…</div></div>
 </div>
 
-<button class="fab" id="add" type="button">+ Add item</button>
+<button class="fab" id="add" type="button" aria-label="Add item">+</button>
 
 <dialog id="dlg">
   <form id="form">
@@ -259,12 +269,16 @@ label .field{font-size:15px;font-weight:500;letter-spacing:0;text-transform:none
   $('add').addEventListener('click',()=>openForm(null));
   $('list').addEventListener('click',e=>{const r=e.target.closest('.row');if(!r)return;const it=items.find(i=>i.id===r.dataset.id);if(it)openForm(it)});
   $('chips').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;brand=c.dataset.b;render()});
+  const fb=$('fbtn');
+  const flag=()=>fb.classList.toggle('on',!!$('fcat').value||$('sort').value!=='ord'||$('hidedp').checked);
+  fb.addEventListener('click',()=>{const o=$('tools').hidden;$('tools').hidden=!o;fb.setAttribute('aria-expanded',o)});
+  $('fcat').addEventListener('change',flag);$('sort').addEventListener('change',flag);$('hidedp').addEventListener('change',flag);
   $('q').addEventListener('input',render); $('fcat').addEventListener('change',render); $('sort').addEventListener('change',render);
 
   const hd=$('hidedp');
   try{hd.checked=localStorage.getItem('hideDP')==='1'}catch(e){}
   const applyHide=()=>{$('app').classList.toggle('hide-dp',hd.checked);try{localStorage.setItem('hideDP',hd.checked?'1':'0')}catch(e){}};
-  hd.addEventListener('change',applyHide); applyHide();
+  hd.addEventListener('change',applyHide); applyHide(); flag();
 
   function persist(){localStorage.setItem(KEY,JSON.stringify(items))}
   try{const raw=localStorage.getItem(KEY);items=raw?JSON.parse(raw):null}catch(e){items=null}
