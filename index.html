@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Phone Price Book</title>
+<meta name="description" content="Cellphone price list with dealer price, SRP and margin.">
+<meta name="theme-color" content="#0f1114">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Manrope:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one quiet ledger. Sticky tool header, then brands as serif-titled chapters with hairline rows; prices right-aligned in tabular figures. */
+:root{
+  --bg:#0f1114; --surface:#16191e; --raise:#1e2228; --line:#2a2f37;
+  --fg:#ece7dc; --muted:#9b978d; --accent:#c8a66b; --accent-ink:#191307;
+  --good:#86c4a0; --danger:#e58372;
+  --display:"Cormorant Garamond",Georgia,"Times New Roman",serif;
+  --body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){
+  --bg:#f5f4f1; --surface:#ffffff; --raise:#eeece7; --line:#dbd7ce;
+  --fg:#1b1d21; --muted:#6a665e; --accent:#86652a; --accent-ink:#ffffff;
+  --good:#2c7a52; --danger:#b23f2e; color-scheme:light } }
+:root[data-theme="light"]{
+  --bg:#f5f4f1; --surface:#ffffff; --raise:#eeece7; --line:#dbd7ce;
+  --fg:#1b1d21; --muted:#6a665e; --accent:#86652a; --accent-ink:#ffffff;
+  --good:#2c7a52; --danger:#b23f2e; color-scheme:light }
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
+.wrap{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:0 110px}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:14px 10px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--display);font-weight:600;font-size:30px;line-height:1;margin:0;letter-spacing:.01em}
+h1 em{font-style:italic;color:var(--accent);font-weight:500}
+.meta{color:var(--muted);font-size:12.5px;letter-spacing:.04em}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tools input[type=search]{flex:1 1 200px;min-width:0}
+.field,.tools select,.tools input{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 12px;min-height:40px}
+.tools select{flex:0 1 auto;max-width:100%}
+.toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);padding:0 4px;min-height:40px;cursor:pointer}
+.toggle input{accent-color:var(--accent);width:16px;height:16px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+.chip small{font-weight:500;opacity:.7;margin-left:5px}
+.chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+.brand{margin-top:34px}
+.brand h2{font-family:var(--display);font-weight:600;font-size:28px;line-height:1.1;margin:0;display:flex;align-items:baseline;gap:12px;letter-spacing:.03em}
+.brand h2::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--accent),transparent)}
+.brand h2 span{order:2;font-family:var(--body);font-size:12px;font-weight:500;color:var(--muted);letter-spacing:.06em}
+.cat{margin:18px 0 2px;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"info srp" "info dp" "info mg";column-gap:16px;row-gap:1px;align-items:start;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:12px 2px;cursor:pointer}
+.row:hover{background:var(--surface)}
+.info{grid-area:info;min-width:0}
+.model{font-weight:600;overflow-wrap:anywhere}
+.color{color:var(--muted);font-size:12.5px;margin-top:2px;overflow-wrap:anywhere;text-transform:capitalize}
+.note{display:inline-block;margin-top:6px;font-size:12px;color:var(--accent);border:1px solid var(--line);border-radius:6px;padding:2px 8px;overflow-wrap:anywhere}
+.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.num i{font-style:normal;font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--muted);margin-right:6px}
+.srp{grid-area:srp;font-weight:700;font-size:16px}
+.dp{grid-area:dp;font-size:13px;color:var(--muted)}
+.mg{grid-area:mg;font-size:12.5px;color:var(--good)}
+.hide-dp .dp,.hide-dp .mg{display:none}
+@media (min-width:760px){
+  .row{grid-template-columns:minmax(0,1fr) 130px 140px 150px;grid-template-areas:"info dp srp mg";align-items:center}
+  .dp{font-size:14px}
+  .hide-dp .row{grid-template-columns:minmax(0,1fr) 140px;grid-template-areas:"info srp"}
+}
+.empty{margin-top:56px;text-align:center;color:var(--muted)}
+.empty b{display:block;font-family:var(--display);font-size:24px;font-weight:600;color:var(--fg);margin-bottom:4px}
+
+.fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:13px 20px;font-weight:700;letter-spacing:.03em;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+
+dialog{background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:14px;padding:0;width:calc(100% - 32px);max-width:500px;max-height:calc(100% - 32px)}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+form{display:flex;flex-direction:column;gap:12px;padding:20px}
+form h3{font-family:var(--display);font-size:26px;font-weight:600;margin:0 0 2px}
+label{display:flex;flex-direction:column;gap:5px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+label .field{font-size:15px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--fg);background:var(--bg);width:100%}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.two>*{min-width:0}
+.calc{font-size:13px;color:var(--good);min-height:1.4em;font-variant-numeric:tabular-nums}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.btn{border:1px solid var(--line);background:transparent;border-radius:8px;padding:10px 16px;font-weight:600;cursor:pointer;min-height:42px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);margin-left:auto}
+.btn.del{color:var(--danger);border-color:var(--danger)}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:10px 16px;font-size:13.5px;max-width:calc(100% - 32px);z-index:20}
+</style>
+
+<div class="wrap" id="app">
+  <div class="top">
+    <div class="head">
+      <h1>Phone <em>Price Book</em></h1>
+      <div class="meta" id="meta">Loading…</div>
+    </div>
+    <div class="tools">
+      <input type="search" id="q" placeholder="Search model, color, brand…" autocomplete="off">
+      <select id="fcat" aria-label="Category"><option value="">All categories</option></select>
+      <select id="sort" aria-label="Sort">
+        <option value="ord">List order</option>
+        <option value="lo">SRP low to high</option>
+        <option value="hi">SRP high to low</option>
+        <option value="mg">Biggest margin</option>
+        <option value="az">Model A–Z</option>
+      </select>
+      <label class="toggle" style="flex-direction:row;text-transform:none;letter-spacing:0;font-weight:500"><input type="checkbox" id="hidedp"> Hide dealer price</label>
+      <button class="btn" type="button" id="backup">Backup</button>
+      <button class="btn" type="button" id="restore">Restore</button>
+      <input type="file" id="rfile" accept="application/json,.json" hidden>
+    </div>
+    <div class="chips" id="chips"></div>
+  </div>
+  <div id="list"><div class="empty"><b>Opening the price book</b>Loading your items…</div></div>
+</div>
+
+<button class="fab" id="add" type="button">+ Add item</button>
+
+<dialog id="dlg">
+  <form id="form">
+    <h3 id="ftitle">Add item</h3>
+    <div class="two">
+      <label>Brand<input class="field" id="f-brand" list="dl-brand" required autocomplete="off"></label>
+      <label>Category<input class="field" id="f-cat" list="dl-cat" required autocomplete="off"></label>
+    </div>
+    <label>Model<input class="field" id="f-model" required autocomplete="off"></label>
+    <label>Colors<input class="field" id="f-color" autocomplete="off" placeholder="Black / Blue"></label>
+    <div class="two">
+      <label>Dealer price (DP)<input class="field" id="f-dp" type="number" inputmode="decimal" step="0.01" min="0" required></label>
+      <label>SRP<input class="field" id="f-srp" type="number" inputmode="decimal" step="0.01" min="0" required></label>
+    </div>
+    <div class="calc" id="calc"></div>
+    <label>Note<input class="field" id="f-note" autocomplete="off" placeholder="Freebies, launch date…"></label>
+    <div class="acts">
+      <button class="btn del" type="button" id="del" hidden>Delete</button>
+      <button class="btn" type="button" id="cancel">Cancel</button>
+      <button class="btn primary" type="submit" id="save">Save</button>
+    </div>
+  </form>
+  <datalist id="dl-brand"></datalist><datalist id="dl-cat"></datalist>
+</dialog>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const CAT_ORDER=['Smartphone','Barphone','Tablet','Accessories'];
+  const KEY='ppb.items.v1', SEED=[{"id":"rlm01","brand":"REALME","cat":"Smartphone","model":"16T 5G (8GB 128GB) RMX5268","color":"AURORA GREEN","dp":20929,"srp":22999,"note":"","ord":101},{"id":"rlm02","brand":"REALME","cat":"Smartphone","model":"C100i (4GB 128GB) RMX5377","color":"D. PURPLE / D. GRAY","dp":10919,"srp":11999,"note":"","ord":102},{"id":"rlm03","brand":"REALME","cat":"Smartphone","model":"C100i (4GB 256GB) RMX5377","color":"D. PURPLE / D. GRAY","dp":12739,"srp":13999,"note":"","ord":103},{"id":"rlm04","brand":"REALME","cat":"Smartphone","model":"C100 RMX5353 (4GB 256GB)","color":"E. BROWN / G. WHITE / V. PURPLE","dp":15469,"srp":16999,"note":"","ord":104},{"id":"rlm05","brand":"REALME","cat":"Smartphone","model":"C100 RMX5353 (8GB 256GB)","color":"E. BROWN / G. WHITE / V. PURPLE","dp":18199,"srp":18999,"note":"","ord":105},{"id":"rlm06","brand":"REALME","cat":"Tablet","model":"NEXAL PAD LTE NXLPAD1 (6GB 256GB)","color":"A. GREEN / O. GRAY","dp":16199,"srp":17999,"note":"","ord":106},{"id":"rlm07","brand":"REALME","cat":"Tablet","model":"TECHLIFE PAD MINI LTE TLPADM04 (4GB 64GB)","color":"C. GOLD / F. PINK / M. BLUE","dp":8999,"srp":9999,"note":"","ord":107},{"id":"rlm08","brand":"REALME","cat":"Tablet","model":"TECHLIFE PAD PLUS 2 TLPADP05 (4GB 128GB)","color":"S. GRAY","dp":13499,"srp":14999,"note":"","ord":108},{"id":"rlm09","brand":"REALME","cat":"Tablet","model":"TECHLIFE PAD PLUS TLPADP04 (8GB 256GB)","color":"S. GRAY","dp":11699,"srp":12999,"note":"","ord":109},{"id":"rlm10","brand":"REALME","cat":"Tablet","model":"TECHLIFE PAD NEO TLPAD002 (4GB 128GB)","color":"S. BLUE / S. GRAY","dp":8099,"srp":8999,"note":"","ord":110},{"id":"rlm11","brand":"REALME","cat":"Accessories","model":"TECHLIFE BUDS NEO TYPE C TLB005","color":"BLACK / WHITE","dp":227,"srp":349,"note":"","ord":111},{"id":"rlm12","brand":"REALME","cat":"Accessories","model":"TECHLIFE 10W CHARGER TDBSC1A1","color":"WHITE","dp":129,"srp":199,"note":"","ord":112},{"id":"rlm13","brand":"REALME","cat":"Accessories","model":"TECHLIFE MICRO USB CABLE TLC002","color":"","dp":174,"srp":249,"note":"","ord":113},{"id":"rlm14","brand":"REALME","cat":"Accessories","model":"TECHLIFE TLPBNK09 POWERBANK R212 (10000mAh)","color":"M. BLUE","dp":879,"srp":1099,"note":"","ord":114},{"id":"rlm15","brand":"REALME","cat":"Accessories","model":"TECHLIFE TLPBNK10 POWERBANK R212 (20000mAh)","color":"M. BLUE / M. GRAY / R. GOLD","dp":1199,"srp":1499,"note":"","ord":115},{"id":"inf01","brand":"INFINIX","cat":"Smartphone","model":"HOT 70 X6895 (4GB 128GB)","color":"DIVE BLUE / GREEN TEXTURE / NIGHT PULSE / SILVER DANCER","dp":8459,"srp":8999,"note":"","ord":201},{"id":"inf02","brand":"INFINIX","cat":"Smartphone","model":"HOT 70 X6895 (4GB 256GB)","color":"DIVE BLUE / GREEN TEXTURE / NIGHT PULSE / QUIET VIOLET / SILVER DANCER / THERMO ORANGE","dp":9399,"srp":9999,"note":"","ord":202},{"id":"inf03","brand":"INFINIX","cat":"Smartphone","model":"HOT 70 X6895B (6GB 128GB)","color":"NIGHT PULSE / SILVER DANCER","dp":8929,"srp":9499,"note":"","ord":203},{"id":"inf04","brand":"INFINIX","cat":"Smartphone","model":"HOT 70 X6895B (6GB 256GB)","color":"DIVE BLUE / GREEN TEXTURE / NIGHT PULSE / QUIET VIOLET / SILVER DANCER / THERMO ORANGE","dp":10339,"srp":10999,"note":"","ord":204},{"id":"inf05","brand":"INFINIX","cat":"Smartphone","model":"HOT 70 X6895B (8GB 128GB)","color":"NIGHT PULSE / SILVER DANCER","dp":9869,"srp":10499,"note":"","ord":205},{"id":"inf06","brand":"INFINIX","cat":"Smartphone","model":"SMART 20 HD X6725 (3GB 64GB)","color":"SILVER DANCER / SUNLIKE ORANGE","dp":5639,"srp":5999,"note":"","ord":206},{"id":"inf07","brand":"INFINIX","cat":"Smartphone","model":"SMART 20 X6840 (4GB 64GB)","color":"CLOUDLINE BLUE / POLARIS TITANIUM / SHADOW BLACK / SUNLIKE ORANGE","dp":6109,"srp":6499,"note":"","ord":207},{"id":"inf08","brand":"INFINIX","cat":"Smartphone","model":"SMART 20 X6840 (4GB 128GB)","color":"CLOUDLINE BLUE / POLARIS TITANIUM / SHADOW BLACK / SUNLIKE ORANGE","dp":7049,"srp":7499,"note":"","ord":208},{"id":"inf09","brand":"INFINIX","cat":"Smartphone","model":"SMART 20 X6840 (4GB 256GB)","color":"CLOUDLINE BLUE / POLARIS TITANIUM / SHADOW BLACK","dp":8741,"srp":9299,"note":"","ord":209},{"id":"inf10","brand":"INFINIX","cat":"Smartphone","model":"NOTE EDGE X6887 (8GB 256GB)","color":"L. TITANIUM / S. BLACK / S. BLUE","dp":13949,"srp":14999,"note":"","ord":210},{"id":"inf11","brand":"INFINIX","cat":"Tablet","model":"XPAD 30E X1102B (4GB 128GB)","color":"DEEP BLUE / FOREST GREEN","dp":9869,"srp":10499,"note":"","ord":211},{"id":"inf12","brand":"INFINIX","cat":"Tablet","model":"XPAD 30E X1102B (8GB 256GB)","color":"DEEP BLUE / DREAMY PURPLE","dp":11279,"srp":11999,"note":"","ord":212},{"id":"inf13","brand":"INFINIX","cat":"Tablet","model":"XPAD 30 PRO X1103 (6GB 128GB)","color":"A. GRAY / T. SILVER / T. PURPLE","dp":13159,"srp":13999,"note":"","ord":213},{"id":"inf14","brand":"INFINIX","cat":"Accessories","model":"XP10 PRO POWER BANK 10000mAh","color":"BLACK","dp":509,"srp":599,"note":"","ord":214},{"id":"inf15","brand":"INFINIX","cat":"Accessories","model":"TWS XBUDS H5 XE36","color":"BLUE / WHITE","dp":506,"srp":599,"note":"","ord":215},{"id":"inf16","brand":"INFINIX","cat":"Accessories","model":"TWS XBUDS 3 LITE XE33","color":"WHITE","dp":423,"srp":499,"note":"","ord":216},{"id":"viv01","brand":"VIVO","cat":"Smartphone","model":"V80 LITE 5G (6GB 128GB)","color":"BLACK / PINK","dp":22750,"srp":24999,"note":"","ord":301},{"id":"viv02","brand":"VIVO","cat":"Smartphone","model":"V80 LITE 5G (6GB 256GB)","color":"BLACK / PINK","dp":25480,"srp":27999,"note":"","ord":302},{"id":"viv03","brand":"VIVO","cat":"Smartphone","model":"Y31D (8GB 256GB)","color":"GRAY","dp":19110,"srp":20999,"note":"","ord":303},{"id":"itl01","brand":"ITEL","cat":"Barphone","model":"2161C","color":"BLACK / D. BLUE / GREEN","dp":483,"srp":519,"note":"","ord":401},{"id":"itl02","brand":"ITEL","cat":"Barphone","model":"2165C","color":"BLACK / BLUE / D. BLUE","dp":510,"srp":549,"note":"","ord":402},{"id":"itl03","brand":"ITEL","cat":"Barphone","model":"2210","color":"BLACK / BLUE / GREEN","dp":548,"srp":589,"note":"","ord":403},{"id":"itl04","brand":"ITEL","cat":"Barphone","model":"5032","color":"BLUE / BLACK","dp":575,"srp":619,"note":"","ord":404},{"id":"itl05","brand":"ITEL","cat":"Barphone","model":"9310 NEO R60 PLUS","color":"BLACK","dp":1029,"srp":1099,"note":"","ord":405},{"id":"itl06","brand":"ITEL","cat":"Barphone","model":"POWER 120","color":"D. BLUE / I. BLUE / L. BLUE","dp":548,"srp":599,"note":"","ord":406},{"id":"itl07","brand":"ITEL","cat":"Smartphone","model":"A100C S A6611L (2GB 64GB)","color":"NATURAL BLACK","dp":4047,"srp":4399,"note":"","ord":407},{"id":"itl08","brand":"ITEL","cat":"Smartphone","model":"A100C S A6611L (3GB 64GB)","color":"C. WHITE / N. BLACK / L. GREEN","dp":4323,"srp":4699,"note":"","ord":408},{"id":"itl09","brand":"ITEL","cat":"Smartphone","model":"A100C S A6611L (4GB 64GB)","color":"C. WHITE / C. ORANGE / N. BLACK / L. GREEN","dp":4783,"srp":5199,"note":"","ord":409},{"id":"itl10","brand":"ITEL","cat":"Smartphone","model":"A100C S A6611L (3GB 128GB)","color":"C. WHITE / N. BLACK / L. GREEN","dp":5059,"srp":5499,"note":"","ord":410},{"id":"itl11","brand":"ITEL","cat":"Smartphone","model":"A200 A675L (3GB 128GB)","color":"M. TITANIUM / N. BLUE / ORANGE / N. GREEN","dp":5243,"srp":5699,"note":"","ord":411},{"id":"itl12","brand":"ITEL","cat":"Smartphone","model":"A200 A675L (4GB 128GB)","color":"M. ORANGE / M. TITANIUM / N. BLUE / N. GREEN","dp":5795,"srp":6299,"note":"","ord":412},{"id":"itl13","brand":"ITEL","cat":"Smartphone","model":"A300 PLUS A681L (4GB 64GB)","color":"MIDNIGHT BLACK","dp":5979,"srp":6499,"note":"","ord":413},{"id":"itl14","brand":"ITEL","cat":"Smartphone","model":"S688LN SUPER 26 ULTRA (8GB 256GB)","color":"BLUSH PINK GOLD / GLIDED WHITE","dp":9659,"srp":10499,"note":"","ord":414},{"id":"itl15","brand":"ITEL","cat":"Tablet","model":"P08003L VISTA TAB GO (3GB 64GB)","color":"STEEL GRAY","dp":5335,"srp":5799,"note":"Freebies: painting brush, study leather case, vision protector","ord":415},{"id":"itl16","brand":"ITEL","cat":"Tablet","model":"VISTA TAB 11 (3GB 128GB)","color":"DEEP GREY / SKY BLUE","dp":6899,"srp":7499,"note":"","ord":416},{"id":"itl17","brand":"ITEL","cat":"Tablet","model":"VISTA TAB 12 (4GB 128GB)","color":"DEEP GREY","dp":7359,"srp":7999,"note":"","ord":417},{"id":"itl18","brand":"ITEL","cat":"Tablet","model":"VISTA TAB 30S (3GB 128GB)","color":"DEEP GREY / SKY BLUE","dp":7911,"srp":8599,"note":"","ord":418},{"id":"itl19","brand":"ITEL","cat":"Accessories","model":"TWS IEW 52 BUDS AIR 5e","color":"WHITE","dp":359,"srp":449,"note":"","ord":419},{"id":"xmi01","brand":"XIAOMI","cat":"Smartphone","model":"17T (12GB 256GB)","color":"BLACK","dp":34199.1,"srp":37999,"note":"","ord":501},{"id":"xmi02","brand":"XIAOMI","cat":"Smartphone","model":"17T (12GB 512GB)","color":"BLACK","dp":37799.1,"srp":41999,"note":"","ord":502},{"id":"xmi03","brand":"XIAOMI","cat":"Smartphone","model":"REDMI 17 (4GB 128GB)","color":"BLACK / DEEP BLUE / OAK GREEN","dp":10919.1,"srp":12999,"note":"","ord":503},{"id":"xmi04","brand":"XIAOMI","cat":"Smartphone","model":"REDMI 17 5G (4GB 128GB)","color":"BLACK / DEEP BLUE","dp":12739.1,"srp":14999,"note":"","ord":504},{"id":"xmi05","brand":"XIAOMI","cat":"Smartphone","model":"REDMI A7 PRO 4G (4GB 128GB)","color":"BLACK / M. BLUE / P. GREEN","dp":7279.09,"srp":7999,"note":"","ord":505},{"id":"xmi06","brand":"XIAOMI","cat":"Smartphone","model":"REDMI NOTE 17 (4GB 128GB)","color":"BLACK / C. PURPLE / S. TEAL","dp":13649.09,"srp":14999,"note":"","ord":506},{"id":"xmi07","brand":"XIAOMI","cat":"Smartphone","model":"REDMI NOTE 17 (6GB 256GB)","color":"BLACK","dp":16379.09,"srp":17999,"note":"","ord":507},{"id":"xmi08","brand":"XIAOMI","cat":"Smartphone","model":"REDMI NOTE 17 5G (6GB 128GB)","color":"BLACK","dp":15469.09,"srp":16999,"note":"","ord":508},{"id":"xmi09","brand":"XIAOMI","cat":"Smartphone","model":"REDMI NOTE 17 PRO 5G (6GB 128GB)","color":"BLACK / S. BLUE","dp":20929.09,"srp":22999,"note":"","ord":509},{"id":"xmi10","brand":"XIAOMI","cat":"Smartphone","model":"REDMI NOTE 17 PRO 5G (8GB 256GB)","color":"BLACK / PURPLE","dp":23659.09,"srp":25999,"note":"","ord":510},{"id":"xmi11","brand":"XIAOMI","cat":"Smartphone","model":"REDMI NOTE 17 PRO MAX 5G (8GB 256GB)","color":"BLACK","dp":28209.09,"srp":30999,"note":"","ord":511},{"id":"xmi12","brand":"XIAOMI","cat":"Tablet","model":"PAD 8 W-KEYBOARD (8GB 256GB)","color":"GRAY","dp":30599.1,"srp":33999,"note":"","ord":512},{"id":"xmi13","brand":"XIAOMI","cat":"Tablet","model":"REDMI PAD 2 (4GB 256GB)","color":"GRAPHITE GRAY","dp":12599.1,"srp":13999,"note":"","ord":513},{"id":"xmi14","brand":"XIAOMI","cat":"Tablet","model":"REDMI PAD 2 (8GB 256GB)","color":"GRAPHITE GRAY","dp":14399.1,"srp":15999,"note":"","ord":514},{"id":"xmi15","brand":"XIAOMI","cat":"Tablet","model":"REDMI PAD 2 9.7 4G (4GB 128GB)","color":"GRAPHITE GRAY","dp":10919.09,"srp":11999,"note":"","ord":515},{"id":"xmi16","brand":"XIAOMI","cat":"Tablet","model":"REDMI PAD 2 9.7 WIFI (4GB 128GB)","color":"GRAPHITE GRAY","dp":9099.09,"srp":9999,"note":"","ord":516},{"id":"xmi17","brand":"XIAOMI","cat":"Tablet","model":"REDMI PAD 2 PRO 5G W-KEYBOARD (8GB 256GB)","color":"GRAPHITE GRAY","dp":23399.1,"srp":25999,"note":"","ord":517},{"id":"xmi18","brand":"XIAOMI","cat":"Tablet","model":"REDMI PAD 2 PRO (8GB 256GB) WITH KEYBOARD","color":"GRAY","dp":20699.1,"srp":22999,"note":"","ord":518},{"id":"tcn01","brand":"TECNO","cat":"Smartphone","model":"CAMON 50 ULTRA 5G CN7C (8GB 256GB)","color":"M. BLACK / N. TITANIUM","dp":20019,"srp":21999,"note":"","ord":601},{"id":"tcn02","brand":"TECNO","cat":"Smartphone","model":"CAMON 50 ULTRA 5G CN7C (12GB 256GB)","color":"M. BLACK / N. TITANIUM / M. PURPLE","dp":20929,"srp":22999,"note":"","ord":602},{"id":"tcn03","brand":"TECNO","cat":"Smartphone","model":"CAMON 50 ULTRA 5G CN7C (12GB 512GB)","color":"M. BLACK","dp":27299,"srp":29999,"note":"","ord":603},{"id":"tcn04","brand":"TECNO","cat":"Smartphone","model":"CAMON SLIM 5G CN6 (8GB 256GB)","color":"B. RED / M. BLACK / R. PINK","dp":25479,"srp":27999,"note":"Start store selling: October 16, 2026","ord":604},{"id":"tcn05","brand":"TECNO","cat":"Smartphone","model":"KN3 SPARK GO 3 (4GB 64GB)","color":"F. WHITE / I. BLACK / T. GRAY","dp":6044,"srp":6499,"note":"","ord":605},{"id":"tcn06","brand":"TECNO","cat":"Smartphone","model":"KN3 SPARK GO 3 (4GB 128GB)","color":"A. PURPLE / F. WHITE / I. BLACK / T. GREY","dp":6974,"srp":7499,"note":"","ord":606},{"id":"tcn07","brand":"TECNO","cat":"Smartphone","model":"KN4 SPARK 50 (4GB 128GB)","color":"I. BLACK / N. TITANIUM","dp":8189,"srp":8999,"note":"","ord":607},{"id":"tcn08","brand":"TECNO","cat":"Smartphone","model":"KN4 SPARK 50 (4GB 256GB)","color":"A. PURPLE / D. ORANGE / I. BLACK / T. GREY","dp":9099,"srp":9999,"note":"","ord":608},{"id":"tcn09","brand":"TECNO","cat":"Smartphone","model":"KN8 SPARK 50 5G (4GB 128GB)","color":"C. GOLD / F. PURPLE / I. BLACK / T. GREY","dp":10009,"srp":10999,"note":"","ord":609},{"id":"tcn10","brand":"TECNO","cat":"Smartphone","model":"KN8 SPARK 50 5G (6GB 256GB)","color":"I. BLACK / T. GRAY","dp":11829,"srp":12999,"note":"","ord":610},{"id":"tcn11","brand":"TECNO","cat":"Smartphone","model":"KN8 SPARK 50 5G (8GB 256GB)","color":"I. BLACK / T. GRAY","dp":13649,"srp":14999,"note":"","ord":611},{"id":"tcn12","brand":"TECNO","cat":"Smartphone","model":"POVA CURVE 2 5G LK7K (8GB 256GB)","color":"M. SILVER / S. TITANIUM / M. PURPLE","dp":16379,"srp":17999,"note":"","ord":612},{"id":"tcn13","brand":"TECNO","cat":"Accessories","model":"OW02 FREEHEAR 2 BUNDLE","color":"PINK MAUVE / SKY BLACK","dp":1500,"srp":2999,"note":"","ord":613},{"id":"tcn14","brand":"TECNO","cat":"Accessories","model":"TSP-WN01 WATCH NEO BUNDLE","color":"BLACK","dp":1750,"srp":3499,"note":"","ord":614},{"id":"tcn15","brand":"TECNO","cat":"Accessories","model":"TSP-W03A WATCH 3 ACTIVE","color":"BLACK","dp":899,"srp":1499,"note":"","ord":615},{"id":"tcn16","brand":"TECNO","cat":"Tablet","model":"MEGAPAD 2 T1103 (6GB 128GB)","color":"LIGHT GREEN / SPACE GRAY","dp":15299,"srp":16999,"note":"","ord":616},{"id":"tcn17","brand":"TECNO","cat":"Tablet","model":"MEGAPAD 2 T1103 (8GB 256GB)","color":"LIGHT GREEN / SPACE GRAY / COSMIC ORANGE","dp":17999,"srp":19999,"note":"","ord":617},{"id":"tcn18","brand":"TECNO","cat":"Tablet","model":"MEGAPAD PRO T1201 (8GB 256GB)","color":"AURORA PURPLE / SKY GRAY","dp":16379,"srp":17999,"note":"","ord":618},{"id":"tcn19","brand":"TECNO","cat":"Tablet","model":"MEGAPAD SE 2 T1002 (4GB 128GB)","color":"DEEP GRAY / IRIS PURPLE / SANDY TITANIUM","dp":10799,"srp":11999,"note":"","ord":619},{"id":"tcn20","brand":"TECNO","cat":"Tablet","model":"MEGAPAD SE 2 T1002 (4GB 256GB)","color":"DEEP GRAY / IRIS PURPLE / SANDY TITANIUM","dp":12599,"srp":13999,"note":"","ord":620}];
+  let items=[], state='loading', brand='', editId=null, delArmed=false, toastT=null;
+
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const peso=n=>'₱'+Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const margin=it=>(Number(it.srp)||0)-(Number(it.dp)||0);
+  const pct=it=>Number(it.srp)>0?(margin(it)/Number(it.srp)*100):0;
+  const catRank=c=>{const i=CAT_ORDER.indexOf(c);return i<0?99:i};
+
+  function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,3200)}
+
+  function render(){
+    const list=$('list');
+    if(state!=='ready'){
+      list.innerHTML=state==='nodb'
+        ?'<div class="empty"><b>Price book unavailable</b>Open this page while signed in to Claude to load your items.</div>'
+        :'<div class="empty"><b>Opening the price book</b>Loading your items…</div>';
+      $('meta').textContent=state==='nodb'?'Not connected':'Loading…';
+      return;
+    }
+    const brands=[...new Set(items.map(i=>i.brand))].sort();
+    const cats=[...new Set(items.map(i=>i.cat))].sort((a,b)=>catRank(a)-catRank(b)||a.localeCompare(b));
+    if(brand&&!brands.includes(brand))brand='';
+
+    $('chips').innerHTML=['',...brands].map(b=>{
+      const n=b?items.filter(i=>i.brand===b).length:items.length;
+      return `<button type="button" class="chip" data-b="${esc(b)}" aria-pressed="${b===brand}">${esc(b||'All')}<small>${n}</small></button>`}).join('');
+    const fc=$('fcat'), cur=fc.value;
+    fc.innerHTML='<option value="">All categories</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join('');
+    fc.value=cats.includes(cur)?cur:'';
+    $('dl-brand').innerHTML=brands.map(b=>`<option value="${esc(b)}">`).join('');
+    $('dl-cat').innerHTML=[...new Set([...CAT_ORDER,...cats])].map(c=>`<option value="${esc(c)}">`).join('');
+
+    const q=$('q').value.trim().toLowerCase(), sort=$('sort').value;
+    let rows=items.filter(i=>(!brand||i.brand===brand)&&(!fc.value||i.cat===fc.value)&&
+      (!q||[i.brand,i.cat,i.model,i.color,i.note].join(' ').toLowerCase().includes(q)));
+    const cmp={ord:(a,b)=>(a.ord||0)-(b.ord||0),lo:(a,b)=>a.srp-b.srp,hi:(a,b)=>b.srp-a.srp,
+      mg:(a,b)=>margin(b)-margin(a),az:(a,b)=>String(a.model).localeCompare(String(b.model))}[sort];
+    rows.sort((a,b)=>String(a.brand).localeCompare(String(b.brand))||catRank(a.cat)-catRank(b.cat)||String(a.cat).localeCompare(String(b.cat))||cmp(a,b));
+
+    $('meta').textContent=`${rows.length===items.length?items.length:rows.length+' of '+items.length} items · ${brands.length} brands`;
+    if(!items.length){list.innerHTML='<div class="empty"><b>No items yet</b>Tap “Add item” to enter your first phone.</div>';return}
+    if(!rows.length){list.innerHTML='<div class="empty"><b>Nothing matches</b>Try a different search or filter.</div>';return}
+
+    let html='', lb=null, lc=null;
+    for(const it of rows){
+      if(it.brand!==lb){
+        if(lb!==null)html+='</section>';
+        const n=rows.filter(r=>r.brand===it.brand).length;
+        html+=`<section class="brand"><h2>${esc(it.brand)}<span>${n} item${n>1?'s':''}</span></h2>`;lb=it.brand;lc=null}
+      if(it.cat!==lc){html+=`<div class="cat">${esc(it.cat)}</div>`;lc=it.cat}
+      const m=margin(it);
+      html+=`<button type="button" class="row" data-id="${esc(it.id)}">
+        <span class="info"><span class="model">${esc(it.model)}</span>
+          ${it.color?`<div class="color">${esc(String(it.color).toLowerCase())}</div>`:''}
+          ${it.note?`<span class="note">${esc(it.note)}</span>`:''}</span>
+        <span class="num srp"><i>SRP</i>${peso(it.srp)}</span>
+        <span class="num dp"><i>DP</i>${peso(it.dp)}</span>
+        <span class="num mg">${m>=0?'+':''}${peso(m)} · ${pct(it).toFixed(1)}%</span>
+      </button>`;
+    }
+    list.innerHTML=html+'</section>';
+  }
+
+  function calc(){
+    const dp=parseFloat($('f-dp').value), srp=parseFloat($('f-srp').value);
+    $('calc').textContent=(isFinite(dp)&&isFinite(srp))?`Margin ${peso(srp-dp)}${srp>0?' · '+((srp-dp)/srp*100).toFixed(1)+'% of SRP':''}`:'';
+  }
+  function openForm(it){
+    editId=it?it.id:null; delArmed=false;
+    $('ftitle').textContent=it?'Edit item':'Add item';
+    $('f-brand').value=it?it.brand:(brand||'');
+    $('f-cat').value=it?it.cat:($('fcat').value||'Smartphone');
+    $('f-model').value=it?it.model:''; $('f-color').value=it?(it.color||''):'';
+    $('f-dp').value=it?it.dp:''; $('f-srp').value=it?it.srp:''; $('f-note').value=it?(it.note||''):'';
+    $('del').hidden=!it; $('del').textContent='Delete'; $('save').disabled=false;
+    calc(); $('dlg').showModal();
+  }
+
+  $('form').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const old=items.find(i=>i.id===editId);
+    const data={brand:$('f-brand').value.trim().toUpperCase(),cat:$('f-cat').value.trim(),model:$('f-model').value.trim(),
+      color:$('f-color').value.trim(),dp:parseFloat($('f-dp').value)||0,srp:parseFloat($('f-srp').value)||0,
+      note:$('f-note').value.trim(),ord:old?(old.ord||0):Date.now()};
+    $('save').disabled=true;
+    try{
+      if(editId){const i=items.findIndex(x=>x.id===editId);items[i]={id:editId,...data}}else items.push({id:'i'+Date.now().toString(36),...data});
+      persist();render();
+      $('dlg').close(); toast(editId?'Item updated':'Item added');
+    }catch(err){$('save').disabled=false;toast('Could not save. This device’s storage may be full.')}
+  });
+  $('del').addEventListener('click',async()=>{
+    if(!delArmed){delArmed=true;$('del').textContent='Tap again to delete';return}
+    try{items=items.filter(x=>x.id!==editId);persist();render();$('dlg').close();toast('Item deleted')}
+    catch(err){toast('Could not delete. This device’s storage may be full.')}
+  });
+  $('cancel').addEventListener('click',()=>$('dlg').close());
+  $('f-dp').addEventListener('input',calc); $('f-srp').addEventListener('input',calc);
+  $('add').addEventListener('click',()=>openForm(null));
+  $('list').addEventListener('click',e=>{const r=e.target.closest('.row');if(!r)return;const it=items.find(i=>i.id===r.dataset.id);if(it)openForm(it)});
+  $('chips').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;brand=c.dataset.b;render()});
+  $('q').addEventListener('input',render); $('fcat').addEventListener('change',render); $('sort').addEventListener('change',render);
+
+  const hd=$('hidedp');
+  try{hd.checked=localStorage.getItem('hideDP')==='1'}catch(e){}
+  const applyHide=()=>{$('app').classList.toggle('hide-dp',hd.checked);try{localStorage.setItem('hideDP',hd.checked?'1':'0')}catch(e){}};
+  hd.addEventListener('change',applyHide); applyHide();
+
+  function persist(){localStorage.setItem(KEY,JSON.stringify(items))}
+  try{const raw=localStorage.getItem(KEY);items=raw?JSON.parse(raw):null}catch(e){items=null}
+  if(!Array.isArray(items))items=SEED.map(x=>({...x}));
+  state='ready';render();
+
+  $('backup').addEventListener('click',()=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([JSON.stringify(items,null,1)],{type:'application/json'}));
+    a.download='phone-price-book-'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    toast('Backup file saved');
+  });
+  $('restore').addEventListener('click',()=>$('rfile').click());
+  $('rfile').addEventListener('change',e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{
+      try{
+        const arr=JSON.parse(r.result);
+        if(!Array.isArray(arr)||!arr.every(x=>x&&typeof x==='object'&&'model' in x))throw 0;
+        items=arr.map((x,n)=>({id:String(x.id||'r'+n),brand:String(x.brand||'').toUpperCase(),cat:String(x.cat||''),model:String(x.model||''),
+          color:String(x.color||''),dp:Number(x.dp)||0,srp:Number(x.srp)||0,note:String(x.note||''),ord:Number(x.ord)||n}));
+        persist();render();toast('Restored '+items.length+' items');
+      }catch(err){toast('That file is not a Phone Price Book backup.')}
+      e.target.value='';
+    };
+    r.readAsText(f);
+  });
+
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+})();
+</script>
+
+</body>
+</html>
